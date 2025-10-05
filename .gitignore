@@ -1,0 +1,19 @@
+# .gitignore
+
+# --- Secrets ---
+# Ignore the file containing our local passwords
+.env
+
+# --- Python Virtual Environment ---
+# Ignore the virtual environment folder itself
+.venv/
+venv/
+
+# --- Python Cache ---
+# Ignore compiled python files and caches
+__pycache__/
+*.pyc
+
+# --- IDE / Editor specific files ---
+.vscode/
+.idea/

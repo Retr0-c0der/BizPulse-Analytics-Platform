@@ -1,0 +1,55 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    networks:
+      - bizpulse-net
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
+    networks:
+      - bizpulse-net
+    depends_on:
+      - zookeeper
+    ports:
+      # Expose Kafka to the host machine for the Python scripts to connect
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      # Listeners for internal (container-to-container) and external (host-to-container) traffic
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  mysql_db:
+    image: mysql:8.0
+    container_name: mysql_db
+    networks:
+      - bizpulse-net
+    ports:
+      # Expose MySQL port to the host for tools like DBeaver or direct script connection
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: bizpulse_db
+      MYSQL_USER: bizpulse_user
+      MYSQL_PASSWORD: userpassword
+    volumes:
+      # Persist MySQL data across container restarts
+      - mysql-data:/var/lib/mysql
+
+networks:
+  bizpulse-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
