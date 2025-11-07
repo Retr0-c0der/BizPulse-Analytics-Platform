@@ -34,6 +34,14 @@ CREATE TABLE IF NOT EXISTS forecast_predictions (
     PRIMARY KEY (product_id, forecast_date)
 );
 
+CREATE TABLE IF NOT EXISTS users (  
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    hashed_password VARCHAR(255) NOT NULL,
+    full_name VARCHAR(100),
+    is_active BOOLEAN DEFAULT TRUE
+);
+
 -- Optional: Insert initial inventory records to get started
 -- You can run this manually or have your stream processor handle it.
 -- INSERT INTO inventory (product_id, stock_level, last_updated) VALUES
