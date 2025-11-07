@@ -1,4 +1,4 @@
-# docker-compose.yml
+# docker-compose.yml (FINAL - Including Website AND Metabase)
 version: '3.8'
 
 services:
@@ -19,12 +19,10 @@ services:
     depends_on:
       - zookeeper
     ports:
-      # Expose Kafka to the host machine for the Python scripts to connect
       - "9093:9093"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      # Listeners for internal (container-to-container) and external (host-to-container) traffic
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -36,7 +34,6 @@ services:
     networks:
       - bizpulse-net
     ports:
-      # Expose MySQL port to the host for tools like DBeaver or direct script connection
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -44,8 +41,77 @@ services:
       MYSQL_USER: bizpulse_user
       MYSQL_PASSWORD: userpassword
     volumes:
-      # Persist MySQL data across container restarts
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  stream_processor:
+    build:
+      context: .
+      dockerfile: stream_processor.Dockerfile
+    container_name: stream_processor
+    networks:
+      - bizpulse-net
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    env_file:
+      - .env
+    restart: on-failure
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: scheduler.Dockerfile
+    container_name: scheduler
+    networks:
+      - bizpulse-net
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    env_file:
+      - .env
+    restart: on-failure
+  
+  # --- CUSTOM WEBSITE SERVICE ---
+  website:
+    build:
+      context: .
+      dockerfile: website.Dockerfile
+    container_name: website
+    ports:
+      - "8000:8000"
+    networks:
+      - bizpulse-net
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    env_file:
+      - .env
+    restart: on-failure
+
+  # --- METABASE SERVICE ---
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    networks:
+      - bizpulse-net
+    volumes:
+      - metabase-data:/metabase-data
+    environment:
+      # These variables tell Metabase to use its own internal H2 database
+      MB_DB_TYPE: h2
+      MB_DB_FILE: /metabase-data/metabase.db
 
 networks:
   bizpulse-net:
@@ -53,3 +119,4 @@ networks:
 
 volumes:
   mysql-data:
+  metabase-data:
