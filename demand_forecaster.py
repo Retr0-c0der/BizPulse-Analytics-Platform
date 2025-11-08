@@ -1,6 +1,7 @@
 # demand_forecaster.py
 import os
 import logging
+import sys
 from typing import Optional
 import pandas as pd
 from prophet import Prophet
@@ -237,6 +238,7 @@ def main():
         db_conn = get_db_connection()
         if not db_conn:
             logger.error("Cannot proceed without database connection")
+            sys.exit(1)
             return
         
         query = "SELECT product_id, timestamp, quantity FROM sales_transactions"

@@ -1,12 +1,13 @@
-# requirements.txt
-kafka-python
-pandas==2.0.3
+# requirements.txt (FINAL CLEANED VERSION)
+pandas==2.2.2
 prophet==1.1.5
-mysql-connector-python
-numpy
-python-dotenv
-schedule
+numpy==1.26.4
+cmdstanpy==1.2.2
 fastapi[all]
+python-dotenv
+uvicorn[standard]
+kafka-python
+mysql-connector-python
 passlib==1.7.4
 bcrypt==4.1.2
 python-jose[cryptography]

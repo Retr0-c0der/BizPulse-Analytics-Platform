@@ -1,5 +1,4 @@
 # docker-compose.yml (FINAL - Including Website AND Metabase)
-version: '3.8'
 
 services:
   zookeeper:
@@ -95,28 +94,9 @@ services:
       - .env
     restart: on-failure
 
-  # --- METABASE SERVICE ---
-  metabase:
-    image: metabase/metabase:latest
-    container_name: metabase
-    ports:
-      - "3000:3000"
-    depends_on:
-      mysql_db:
-        condition: service_healthy
-    networks:
-      - bizpulse-net
-    volumes:
-      - metabase-data:/metabase-data
-    environment:
-      # These variables tell Metabase to use its own internal H2 database
-      MB_DB_TYPE: h2
-      MB_DB_FILE: /metabase-data/metabase.db
-
 networks:
   bizpulse-net:
     driver: bridge
 
 volumes:
   mysql-data:
-  metabase-data:

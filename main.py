@@ -138,7 +138,18 @@ def get_product_forecast(product_id: str, current_user: Annotated[dict, Depends(
     cursor.close()
     return forecast
 
-# Add this new endpoint to main.py, before the other /api endpoints
+@app.get("/api/users/me")
+def read_users_me(current_user: Annotated[dict, Depends(get_current_user)]):
+    """
+    Fetches the details for the currently authenticated user.
+    """
+    # The 'current_user' dictionary already contains the user's data from the DB.
+    # We can return it directly or select specific fields.
+    return {
+        "username": current_user["username"],
+        "full_name": current_user["full_name"],
+        "is_active": current_user["is_active"]
+    }
 
 @app.get("/api/summary")
 def get_summary(current_user: Annotated[dict, Depends(get_current_user)], db: connection.MySQLConnection = Depends(get_db)):
