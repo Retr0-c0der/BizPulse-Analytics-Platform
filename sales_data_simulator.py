@@ -110,7 +110,7 @@ class SalesDataSimulator:
         try:
             cursor = db_conn.cursor()
             # CORRECTED QUERY: Use the 'inventory' table and 'stock_level' column
-            query = "SELECT product_id FROM inventory WHERE stock_level > 0"
+            query = "SELECT product_id FROM inventory WHERE stock_level > 0 AND user_id = 1"
             cursor.execute(query)
             in_stock = [row[0] for row in cursor.fetchall()]
             
@@ -183,6 +183,7 @@ class SalesDataSimulator:
             quantity = random.randint(100, 200)
         
         return {
+            'user_id': 1,
             'product_id': product_id,
             'quantity': quantity,
             'transaction_type': transaction_type,
@@ -232,6 +233,7 @@ class SalesDataSimulator:
             quantity = random.randint(50, 150)
         
         return {
+            'user_id': 1,
             'product_id': product_id,
             'quantity': quantity,
             'transaction_type': transaction_type,

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up for BizPulse</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="login-page">
+        <div class="login-background">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+        
+        <div class="login-container">
+            <div class="login-header">
+                <div class="logo-wrapper">
+                    <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                    </svg>
+                </div>
+                <h2>Create Your BizPulse Account</h2>
+                <p>Start your journey with real-time intelligence.</p>
+            </div>
+            
+            <form id="register-form">
+                <div class="input-group">
+                    <input type="text" id="fullname" placeholder="Full Name" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="Username" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+                
+                <button type="submit" class="login-button">
+                    <span class="button-text">Create Account</span>
+                </button>
+            </form>
+            
+            <div id="message-area" class="error-message"></div>
+            
+            <div class="login-footer" style="border-top: none; margin-top: 1.5rem;">
+                <p>Already have an account? <a href="/" style="color: var(--primary-color);">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const registerForm = document.getElementById('register-form');
+        const fullnameInput = document.getElementById('fullname');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const messageArea = document.getElementById('message-area');
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fullName = fullnameInput.value.trim();
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            const registerButton = e.target.querySelector('button');
+            const buttonText = registerButton.querySelector('.button-text');
+
+            if (!fullName || !username || !password) {
+                showMessage('Please fill out all fields.', 'error');
+                return;
+            }
+
+            buttonText.textContent = 'Creating...';
+            registerButton.disabled = true;
+            registerButton.classList.add('loading');
+            messageArea.classList.remove('show', 'success');
+
+            try {
+                const response = await fetch('/api/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        full_name: fullName,
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Account created successfully! Redirecting to login...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    showMessage(data.detail || 'An unknown error occurred.', 'error');
+                    resetButton(registerButton, buttonText);
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showMessage('A network error occurred. Please try again.', 'error');
+                resetButton(registerButton, buttonText);
+            }
+        });
+
+        function showMessage(message, type = 'error') {
+            messageArea.textContent = message;
+            messageArea.className = 'error-message show'; // Reset classes
+            if (type === 'success') {
+                messageArea.style.background = '#d1fae5';
+                messageArea.style.color = '#065f46';
+                messageArea.style.borderColor = '#a7f3d0';
+            } else {
+                messageArea.style.background = '#fee';
+                messageArea.style.color = '#c53030';
+                messageArea.style.borderColor = '#fcc';
+            }
+        }
+
+        function resetButton(button, textElement) {
+            textElement.textContent = 'Create Account';
+            button.disabled = false;
+            button.classList.remove('loading');
+        }
+    </script>
+</body>
+</html>

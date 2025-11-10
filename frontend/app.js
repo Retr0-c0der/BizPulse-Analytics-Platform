@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     initializeDashboard(token);
+    setupTabListeners();
+    setupInventoryTableListener(token); // Attach listener once
 });
 
 async function initializeDashboard(token) {
@@ -16,6 +18,8 @@ async function initializeDashboard(token) {
         await Promise.all([
             fetchUserInfo(token),
             fetchSummaryData(token),
+            fetchAlerts(token),
+            fetchInsights(token), 
             populateProductSelector(token)
         ]);
     } catch (error) {
@@ -29,9 +33,123 @@ async function initializeDashboard(token) {
     document.getElementById('logout-button').addEventListener('click', handleLogout);
 }
 
+function setupTabListeners() {
+    const tabs = document.querySelectorAll('.tab-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            document.getElementById(tab.dataset.tab).classList.add('active');
+
+            if (tab.dataset.tab === 'forecast-analytics-tab' && forecastChart) {
+                setTimeout(() => forecastChart.resize(), 50);
+            }
+        });
+    });
+}
+
+// CORRECTED LOGIC: Now switches to the correct tab for forecasts
+function setupInventoryTableListener(token) {
+    const tableBody = document.querySelector('#inventory-table tbody');
+    
+    tableBody.addEventListener('click', (event) => {
+        const row = event.target.closest('tr');
+        if (!row || !row.dataset.productId) return;
+
+        const productId = row.dataset.productId;
+        
+        // Find the Forecasts & Analytics tab button and click it
+        const forecastTabButton = document.querySelector('.tab-link[data-tab="forecast-analytics-tab"]');
+        if (forecastTabButton) {
+            forecastTabButton.click();
+        }
+
+        // Update the forecast dropdown and fetch the new data
+        const selector = document.getElementById('product-selector');
+        selector.value = productId;
+        fetchForecast(productId, token);
+    });
+}
+
 function handleLogout() {
     localStorage.removeItem('accessToken');
     window.location.href = '/';
+}
+
+async function fetchInsights(token) {
+    const listContainer = document.getElementById('insights-list');
+    try {
+        const response = await fetch('/api/insights/frequently-bought-together', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch insights');
+        const rules = await response.json();
+
+        if (rules.length === 0) {
+            listContainer.innerHTML = '<p style="padding: 1rem; text-align: center;">Not enough data to find purchase patterns yet.</p>';
+            return;
+        }
+
+        let html = '<ul>';
+        rules.forEach(rule => {
+            html += `
+                <li>
+                    <span>When a customer buys <b>${rule.antecedents}</b>...</span>
+                    <span style="font-size: 0.9em; color: var(--text-light);">
+                        ...they also buy <b>${rule.consequents}</b> ${(rule.confidence * 100).toFixed(0)}% of the time.
+                    </span>
+                </li>
+            `;
+        });
+        html += '</ul>';
+        listContainer.innerHTML = html;
+
+    } catch (error) {
+        console.error('Error fetching insights:', error);
+        listContainer.innerHTML = '<p class="error-row">Could not load insights.</p>';
+    }
+}
+
+async function fetchAlerts(token) {
+    const listContainer = document.getElementById('alerts-list');
+    try {
+        const response = await fetch('/api/alerts', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.status === 401) throw new Error('UNAUTHORIZED');
+        if (!response.ok) throw new Error('Failed to fetch alerts');
+
+        const alerts = await response.json();
+        
+        if (alerts.length === 0) {
+            listContainer.innerHTML = '<p style="padding: 1rem; text-align: center;">No active alerts. Good job!</p>';
+            return;
+        }
+
+        let html = '<ul>';
+        alerts.forEach(alert => {
+            html += `
+                <li>
+                    <span class="alert-product">${alert.product_id}</span>
+                    <span class="alert-message">${alert.alert_message}</span>
+                </li>
+            `;
+        });
+        html += '</ul>';
+        listContainer.innerHTML = html;
+
+    } catch (error) {
+        console.error('Error fetching alerts:', error);
+        listContainer.innerHTML = '<p class="error-row">Could not load alerts.</p>';
+        throw error;
+    }
 }
 
 async function fetchUserInfo(token) {
@@ -62,27 +180,80 @@ async function fetchSummaryData(token) {
         
         const data = await response.json();
 
-        animateCounter('kpi-total-products', data.total_products);
-        animateCounter('kpi-total-units', data.total_units_in_stock);
-        animateCounter('kpi-sales-24h', data.sales_last_24h);
-        animateCounter('kpi-low-stock', data.low_stock_items);
-    } catch (error) {
+        if (data.total_products === 0 && data.total_units_in_stock === 0) {
+            displayEmptyState(token);
+        } else {
+            hideEmptyState();
+            animateCounter('kpi-total-products', data.total_products);
+            animateCounter('kpi-total-units', data.total_units_in_stock);
+            animateCounter('kpi-sales-24h', data.sales_last_24h);
+            animateCounter('kpi-low-stock', data.low_stock_items);
+        }
+    } catch (error)
+ {
         console.error('Error fetching summary data:', error);
+        if (error.message !== 'UNAUTHORIZED') {
+            displayEmptyState(token);
+        }
         throw error;
     }
+}
+
+function displayEmptyState(token) {
+    document.getElementById('empty-state-container').style.display = 'block';
+    document.querySelector('.kpi-grid').style.display = 'none';
+    document.querySelector('.container-wrapper').style.display = 'none';
+
+    const genButton = document.getElementById('generate-data-button');
+    const statusText = document.getElementById('generation-status');
+    
+    if (genButton.dataset.listenerAttached) return;
+    genButton.dataset.listenerAttached = 'true';
+
+    genButton.addEventListener('click', async () => {
+        genButton.disabled = true;
+        genButton.querySelector('.button-text').textContent = 'Generating...';
+        statusText.textContent = 'Please wait, this can take up to 30 seconds. The page will reload automatically.';
+
+        try {
+            const response = await fetch('/api/users/me/generate-demo-data', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 25000); 
+            } else {
+                 statusText.textContent = 'An error occurred. Please try refreshing the page.';
+                 genButton.disabled = false;
+                 genButton.querySelector('.button-text').textContent = 'Generate Demo Data';
+            }
+        } catch (error) {
+            console.error('Error generating data:', error);
+            statusText.textContent = 'A network error occurred. Please try again.';
+            genButton.disabled = false;
+            genButton.querySelector('.button-text').textContent = 'Generate Demo Data';
+        }
+    });
+}
+
+function hideEmptyState() {
+    document.getElementById('empty-state-container').style.display = 'none';
+    document.querySelector('.kpi-grid').style.display = 'grid';
+    document.querySelector('.container-wrapper').style.display = 'block';
 }
 
 function animateCounter(elementId, targetValue) {
     const element = document.getElementById(elementId);
     const duration = 1000;
-    const start = 0;
     const startTime = performance.now();
 
     function update(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const current = Math.floor(progress * targetValue);
-        
         element.textContent = current.toLocaleString();
         
         if (progress < 1) {
@@ -141,6 +312,7 @@ function displayInventory(data) {
         const row = document.createElement('tr');
         row.style.animationDelay = `${index * 0.05}s`;
         row.classList.add('fade-in');
+        row.dataset.productId = product.product_id;
         
         const stockClass = product.stock_level < 50 ? 'low-stock' : 
                           product.stock_level < 100 ? 'medium-stock' : 'high-stock';
@@ -188,7 +360,7 @@ async function fetchForecast(productId, token) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Predicted Sales',
+                    label: `Predicted Sales for ${productId}`,
                     data: predictedUnits,
                     borderColor: '#3498db',
                     backgroundColor: 'rgba(52, 152, 219, 0.1)',
@@ -203,42 +375,14 @@ async function fetchForecast(productId, token) {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            font: { size: 14, family: "'Roboto', sans-serif" },
-                            padding: 15
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 12,
-                        titleFont: { size: 14 },
-                        bodyFont: { size: 13 },
-                        cornerRadius: 4
-                    }
+                    legend: { display: true, position: 'top', labels: { font: { size: 14, family: "'Roboto', sans-serif" }, padding: 15 } },
+                    tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)', padding: 12, titleFont: { size: 14 }, bodyFont: { size: 13 }, cornerRadius: 4 }
                 },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        },
-                        ticks: {
-                            font: { size: 12 }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: { size: 12 }
-                        }
-                    }
+                    y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { font: { size: 12 } } },
+                    x: { grid: { display: false }, ticks: { font: { size: 12 } } }
                 }
             }
         });
@@ -258,7 +402,7 @@ async function fetchForecast(productId, token) {
         ctx.font = '14px Roboto';
         ctx.fillStyle = '#e74c3c';
         ctx.textAlign = 'center';
-        ctx.fillText('Failed to load forecast data', canvas.width / 2, canvas.height / 2);
+        ctx.fillText(`Failed to load forecast for ${productId}`, canvas.width / 2, canvas.height / 2);
     }
 }
 

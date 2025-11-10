@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>BizPulse Dashboard - Real-Time Business Intelligence</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,24 +11,26 @@
     <header>
         <div class="header-content">
             <div class="logo-section">
-                <svg class="header-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-                </svg>
+                <svg class="header-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
                 <h1>BizPulse Dashboard</h1>
             </div>
             <div class="user-info">
                 <span id="welcome-message">Loading...</span>
+                <a href="/connections" class="btn-logout" style="text-decoration: none;">Connections</a>
                 <button id="logout-button" class="btn-logout">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                        <polyline points="16 17 21 12 16 7"/>
-                        <line x1="21" y1="12" x2="9" y2="12"/>
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     Logout
                 </button>
             </div>
         </div>
     </header>
+
+    <div id="empty-state-container" style="display: none;">
+        <h2>Welcome to Your BizPulse Dashboard!</h2>
+        <p>Your account is ready. To see the platform in action, generate a set of sample sales and inventory data.</p>
+        <button id="generate-data-button" class="login-button" style="max-width: 300px; margin: 0 auto;"><span class="button-text">Generate Demo Data</span></button>
+        <p id="generation-status"></p>
+    </div>
 
     <div class="kpi-grid">
         <div class="kpi-card">
@@ -45,6 +47,7 @@
                 <p id="kpi-total-products">0</p>
             </div>
         </div>
+        
         <div class="kpi-card">
             <div class="kpi-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -58,6 +61,7 @@
                 <p id="kpi-total-units">0</p>
             </div>
         </div>
+        
         <div class="kpi-card">
             <div class="kpi-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -70,6 +74,7 @@
                 <p id="kpi-sales-24h">0</p>
             </div>
         </div>
+        
         <div class="kpi-card">
             <div class="kpi-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -85,60 +90,108 @@
         </div>
     </div>
 
-    <main class="container">
-        <div class="card">
-            <div class="card-header">
-                <h2>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-                    </svg>
-                    Inventory Status
-                </h2>
-            </div>
-            <div class="table-container">
-                <table id="inventory-table">
-                    <thead>
-                        <tr>
-                            <th onclick="sortTable(0)">
-                                Product ID 
-                                <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 5v14M19 12l-7 7-7-7"/>
-                                </svg>
-                            </th>
-                            <th onclick="sortTable(1)">
-                                Stock Level 
-                                <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 5v14M19 12l-7 7-7-7"/>
-                                </svg>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td colspan="2" class="loading-row">Loading inventory data...</td></tr>
-                    </tbody>
-                </table>
+    <main class="container-wrapper">
+        <nav class="tabs">
+            <button class="tab-link active" data-tab="dashboard-tab">Dashboard</button>
+            <button class="tab-link" data-tab="forecast-analytics-tab">Forecasts & Analytics</button>
+        </nav>
+
+        <!-- Tab 1: Dashboard (Alerts & Inventory) -->
+        <div id="dashboard-tab" class="tab-content active">
+            <div class="container" style="grid-template-columns: 1fr 1fr; align-items: stretch;">
+                <div class="card card-full-height" id="alerts-card">
+                    <div class="card-header">
+                        <h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            Actionable Alerts
+                        </h2>
+                    </div>
+                    <div id="alerts-list" class="list-container">
+                        <p class="loading-row">Loading alerts...</p>
+                    </div>
+                </div>
+                
+                <div class="card card-full-height" id="inventory-table-card">
+                    <div class="card-header">
+                        <h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                            </svg>
+                            Inventory Status
+                        </h2>
+                    </div>
+                    <div class="table-container">
+                        <table id="inventory-table">
+                            <thead>
+                                <tr>
+                                    <th onclick="sortTable(0)">
+                                        Product ID
+                                        <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 5v14M19 12l-7 7-7-7"/>
+                                        </svg>
+                                    </th>
+                                    <th onclick="sortTable(1)">
+                                        Stock Level
+                                        <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 5v14M19 12l-7 7-7-7"/>
+                                        </svg>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="2" class="loading-row">Loading inventory data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <div class="card">
-            <div class="card-header">
-                <h2>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
-                        <path d="M22 12A10 10 0 0 0 12 2v10z"/>
-                    </svg>
-                    30-Day Demand Forecast
-                </h2>
-            </div>
-            <div class="forecast-selector-wrapper">
-                <label for="product-selector">Select Product:</label>
-                <select id="product-selector">
-                    <option value="">Loading products...</option>
-                </select>
-            </div>
-            <div id="forecast-chart-container" class="chart-container">
-                <canvas id="forecast-chart"></canvas>
+
+        <!-- Tab 2: Forecasts & Analytics -->
+        <div id="forecast-analytics-tab" class="tab-content">
+            <div class="container">
+                <div class="card" id="forecast-card">
+                    <div class="card-header">
+                        <h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                                <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                            </svg>
+                            30-Day Demand Forecast
+                        </h2>
+                    </div>
+                    <div class="forecast-selector-wrapper">
+                        <label for="product-selector">Select Product:</label>
+                        <select id="product-selector">
+                            <option value="">Loading products...</option>
+                        </select>
+                    </div>
+                    <div id="forecast-chart-container" class="chart-container">
+                        <canvas id="forecast-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card" id="insights-card">
+                    <div class="card-header">
+                        <h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 1v6m0 6v6m-5.5-5.5 4.5-4.5m0 9 4.5-4.5m5.5.5h-6m-6 0H1m10.5 5.5-4.5 4.5m9 0-4.5-4.5"/>
+                            </svg>
+                            Customer Insights
+                        </h2>
+                    </div>
+                    <div id="insights-list" class="list-container">
+                        <p class="loading-row">Analyzing purchasing patterns...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </main>

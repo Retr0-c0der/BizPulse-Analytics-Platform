@@ -1,22 +1,17 @@
-# demand_forecaster.py
+# demand_forecaster.py (TENANT-AWARE)
 import os
 import logging
 import sys
-from typing import Optional
+from typing import Optional, List
 import pandas as pd
 from prophet import Prophet
 import mysql.connector
 from mysql.connector import Error
 from dotenv import load_dotenv
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Load environment variables
 load_dotenv()
 
 # --- Configuration ---
@@ -24,131 +19,144 @@ DB_HOST = os.getenv('DB_HOST')
 DB_DATABASE = os.getenv('DB_DATABASE')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
-
-# Forecasting parameters
 FORECAST_DAYS = int(os.getenv('FORECAST_DAYS', 30))
 MIN_HISTORICAL_DAYS = int(os.getenv('MIN_HISTORICAL_DAYS', 14))
 MIN_TRANSACTIONS = int(os.getenv('MIN_TRANSACTIONS', 10))
 
 def get_db_connection() -> Optional[mysql.connector.MySQLConnection]:
-    """Establishes and returns a connection to the MySQL database."""
     try:
-        conn = mysql.connector.connect(
-            host=DB_HOST,
-            database=DB_DATABASE,
-            user=DB_USER,
-            password=DB_PASSWORD
-        )
+        conn = mysql.connector.connect(host=DB_HOST, database=DB_DATABASE, user=DB_USER, password=DB_PASSWORD)
         if conn.is_connected():
-            logger.info("MySQL Database connection successful")
             return conn
     except Error as e:
         logger.error(f"Error connecting to MySQL Database: {e}")
         return None
 
-def validate_product_data(product_df: pd.DataFrame, product_id: str) -> bool:
-    """
-    Validates if product has sufficient data for forecasting.
-    
-    Args:
-        product_df: DataFrame with product sales history
-        product_id: Product identifier for logging
-        
-    Returns:
-        True if data is sufficient, False otherwise
-    """
-    if len(product_df) < MIN_TRANSACTIONS:
-        logger.warning(
-            f"Product {product_id}: Insufficient data points "
-            f"({len(product_df)} < {MIN_TRANSACTIONS}). Skipping."
-        )
-        return False
-    
-    date_range = (product_df['ds'].max() - product_df['ds'].min()).days
-    if date_range < MIN_HISTORICAL_DAYS:
-        logger.warning(
-            f"Product {product_id}: Insufficient date range "
-            f"({date_range} days < {MIN_HISTORICAL_DAYS} days). Skipping."
-        )
-        return False
-    
-    return True
+def get_all_user_ids(conn: mysql.connector.MySQLConnection) -> List[int]:
+    """Fetches a list of all active user IDs."""
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE is_active = TRUE;")
+        user_ids = [item[0] for item in cursor.fetchall()]
+        logger.info(f"Found {len(user_ids)} active users to process.")
+        return user_ids
+    except Error as e:
+        logger.error(f"Could not fetch user IDs: {e}")
+        return []
+    finally:
+        cursor.close()
 
-def prepare_product_data(df: pd.DataFrame, product_id: str) -> pd.DataFrame:
-    """
-    Prepares and aggregates product data for Prophet.
-    
-    Args:
-        df: Raw sales DataFrame
-        product_id: Product to prepare data for
-        
-    Returns:
-        Prepared DataFrame with daily aggregated sales
-    """
-    product_df = df[df['product_id'] == product_id][['timestamp', 'quantity']].copy()
-    product_df.rename(columns={'timestamp': 'ds', 'quantity': 'y'}, inplace=True)
-    
-    # Aggregate multiple transactions per day
-    product_df = product_df.groupby('ds', as_index=False).agg({'y': 'sum'})
-    
-    # Sort by date to ensure proper time series
-    product_df = product_df.sort_values('ds').reset_index(drop=True)
-    
-    return product_df
+def calculate_and_save_stockout_alerts(conn: mysql.connector.MySQLConnection, user_id: int):
+    logger.info(f"User {user_id}: Starting stock-out alert calculation...")
+    try:
+        # 1. Fetch current inventory and forecasts for the user
+        inventory_query = "SELECT product_id, stock_level FROM inventory WHERE user_id = %s"
+        inventory_df = pd.read_sql(inventory_query, conn, params=(user_id,))
+        if inventory_df.empty:
+            logger.info(f"User {user_id}: No inventory found, skipping alert calculation.")
+            return
 
-def train_and_forecast(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Trains a Prophet model for each product and forecasts demand.
+        forecast_query = """
+            SELECT product_id, forecast_date, predicted_units 
+            FROM forecast_predictions WHERE user_id = %s ORDER BY forecast_date
+        """
+        forecast_df = pd.read_sql(forecast_query, conn, params=(user_id,))
+        if forecast_df.empty:
+            logger.info(f"User {user_id}: No forecast data found, skipping alert calculation.")
+            return
 
-    Args:
-        df: DataFrame with historical sales data containing 
-            'product_id', 'timestamp', and 'quantity'.
+        alerts_to_insert = []
+        today = pd.Timestamp.now().normalize()
 
-    Returns:
-        DataFrame with forecasts for all products with sufficient data.
-    """
+        for _, row in inventory_df.iterrows():
+            product_id = row['product_id']
+            current_stock = row['stock_level']
+            
+            product_forecast = forecast_df[forecast_df['product_id'] == product_id].copy()
+            if product_forecast.empty:
+                continue
+
+            product_forecast['cumulative_demand'] = product_forecast['predicted_units'].cumsum()
+            
+            # Find the first day where cumulative demand exceeds current stock
+            stockout_day = product_forecast[product_forecast['cumulative_demand'] >= current_stock]
+            
+            if not stockout_day.empty:
+                first_stockout_date = pd.to_datetime(stockout_day.iloc[0]['forecast_date'])
+                days_until_stockout = (first_stockout_date - today).days
+                
+                if days_until_stockout >= 0:
+                    message = f"Predicted to stock out in {days_until_stockout} days."
+                    alerts_to_insert.append((
+                        user_id, product_id, 'PREDICTED_STOCK_OUT', message, 'critical'
+                    ))
+
+        # 2. Update the database (clear old alerts, insert new ones)
+        if alerts_to_insert:
+            cursor = conn.cursor()
+            logger.info(f"User {user_id}: Clearing old stock-out alerts...")
+            cursor.execute("""
+                DELETE FROM product_alerts 
+                WHERE user_id = %s AND alert_type = 'PREDICTED_STOCK_OUT'
+            """, (user_id,))
+            
+            logger.info(f"User {user_id}: Inserting {len(alerts_to_insert)} new stock-out alerts.")
+            insert_query = """
+            INSERT INTO product_alerts 
+            (user_id, product_id, alert_type, alert_message, severity)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.executemany(insert_query, alerts_to_insert)
+            conn.commit()
+            cursor.close()
+
+    except Exception as e:
+        logger.error(f"User {user_id}: Failed during stock-out alert calculation: {e}", exc_info=True)
+        conn.rollback()
+
+def fetch_user_sales_data(conn: mysql.connector.MySQLConnection, user_id: int) -> pd.DataFrame:
+    """Fetches all historical sales data for a specific user."""
+    query = "SELECT product_id, timestamp, quantity FROM sales_transactions WHERE user_id = %s"
+    try:
+        df = pd.read_sql(query, conn, params=(user_id,))
+        logger.info(f"User {user_id}: Loaded {len(df)} historical sales records.")
+        return df
+    except Exception as e:
+        logger.error(f"User {user_id}: Failed to fetch sales data: {e}")
+        return pd.DataFrame()
+
+def train_and_forecast(df: pd.DataFrame, user_id: int) -> pd.DataFrame:
     all_forecasts = []
-    
-    # Ensure timestamp is in datetime format
+    if df.empty:
+        return pd.DataFrame()
+
     df['timestamp'] = pd.to_datetime(df['timestamp'])
-    
     products = df['product_id'].unique()
-    logger.info(f"Starting forecast for {len(products)} products")
     
     for product in products:
         try:
-            logger.info(f"Processing product: {product}")
+            product_df = df[df['product_id'] == product][['timestamp', 'quantity']].copy()
+            product_df.rename(columns={'timestamp': 'ds', 'quantity': 'y'}, inplace=True)
+            product_df = product_df.groupby('ds', as_index=False).agg({'y': 'sum'}).sort_values('ds')
             
-            # Prepare and validate data
-            product_df = prepare_product_data(df, product)
-            
-            if not validate_product_data(product_df, product):
+            if len(product_df) < MIN_TRANSACTIONS or (product_df['ds'].max() - product_df['ds'].min()).days < MIN_HISTORICAL_DAYS:
+                logger.warning(f"User {user_id}, Product {product}: Insufficient data. Skipping.")
                 continue
-            
-            # Initialize and fit the model with error handling
-            model = Prophet(
-                daily_seasonality=True,
-                weekly_seasonality=True,
-                yearly_seasonality='auto',
-                interval_width=0.95  # 95% confidence interval
-            )
-            
+
             # Suppress Prophet's verbose output
             import logging as prophet_logging
             prophet_logging.getLogger('prophet').setLevel(prophet_logging.WARNING)
-            
+
+            model = Prophet(daily_seasonality=True, weekly_seasonality=True, yearly_seasonality='auto')
             model.fit(product_df)
-            
-            # Create future dataframe and predict
             future = model.make_future_dataframe(periods=FORECAST_DAYS)
             forecast = model.predict(future)
-            
-            # Filter for future dates only
+
             future_forecast = forecast[forecast['ds'] > product_df['ds'].max()].copy()
-            future_forecast = future_forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
-            
-            # Add product_id and format columns
+            future_forecast['user_id'] = user_id
             future_forecast['product_id'] = product
+            
+            # --- THIS IS THE MAIN FIX ---
             future_forecast.rename(columns={
                 'ds': 'forecast_date',
                 'yhat': 'predicted_units',
@@ -156,113 +164,87 @@ def train_and_forecast(df: pd.DataFrame) -> pd.DataFrame:
                 'yhat_upper': 'confidence_high'
             }, inplace=True)
             
-            # Ensure non-negative predictions (can't have negative sales)
-            future_forecast['predicted_units'] = future_forecast['predicted_units'].clip(lower=0)
+            future_forecast['predicted_units'] = future_forecast['predicted_units'].clip(lower=0).round().astype(int)
             future_forecast['confidence_low'] = future_forecast['confidence_low'].clip(lower=0)
             future_forecast['confidence_high'] = future_forecast['confidence_high'].clip(lower=0)
             
-            # Round predictions to nearest integer
-            future_forecast['predicted_units'] = future_forecast['predicted_units'].round().astype(int)
+            # Select and reorder columns to match DB schema
+            future_forecast = future_forecast[[
+                'user_id', 'product_id', 'forecast_date', 'predicted_units', 
+                'confidence_low', 'confidence_high'
+            ]]
             
             all_forecasts.append(future_forecast)
-            logger.info(f"Successfully forecasted {len(future_forecast)} days for {product}")
-            
         except Exception as e:
-            logger.error(f"Error forecasting product {product}: {e}", exc_info=True)
+            logger.error(f"User {user_id}, Product {product}: Error during forecasting: {e}", exc_info=True)
             continue
-    
+            
     if not all_forecasts:
-        logger.warning("No products had sufficient data for forecasting")
         return pd.DataFrame()
     
-    # Combine all forecasts
     final_forecasts = pd.concat(all_forecasts, ignore_index=True)
-    
-    # Re-order columns to match database schema
-    column_order = ['product_id', 'forecast_date', 'predicted_units', 
-                    'confidence_low', 'confidence_high']
-    
-    logger.info(f"Generated {len(final_forecasts)} total forecast records")
-    return final_forecasts[column_order]
+    return final_forecasts
 
-def update_forecast_db(forecast_data: pd.DataFrame) -> bool:
-    """
-    Clears the existing forecast table and inserts new predictions.
-    
-    Args:
-        forecast_data: DataFrame containing the new forecast predictions.
-        
-    Returns:
-        True if successful, False otherwise
-    """
+def update_forecast_db(conn: mysql.connector.MySQLConnection, forecast_data: pd.DataFrame, user_id: int) -> bool:
     if forecast_data.empty:
-        logger.warning("No forecast data to update in database")
-        return False
+        logger.warning(f"User {user_id}: No forecast data to update in database.")
+        return True # Not a failure, just nothing to do
     
-    conn = get_db_connection()
-    if not conn:
-        return False
-        
     cursor = conn.cursor()
     try:
-        logger.info("Clearing old forecast data...")
-        cursor.execute("TRUNCATE TABLE forecast_predictions;")
+        # CRITICAL CHANGE: Delete only the specific user's old data
+        logger.info(f"User {user_id}: Clearing old forecast data...")
+        cursor.execute("DELETE FROM forecast_predictions WHERE user_id = %s;", (user_id,))
         
-        logger.info(f"Inserting {len(forecast_data)} new forecast records...")
+        logger.info(f"User {user_id}: Inserting {len(forecast_data)} new forecast records...")
         insert_query = """
         INSERT INTO forecast_predictions 
-        (product_id, forecast_date, predicted_units, confidence_low, confidence_high) 
-        VALUES (%s, %s, %s, %s, %s)
+        (user_id, product_id, forecast_date, predicted_units, confidence_low, confidence_high) 
+        VALUES (%s, %s, %s, %s, %s, %s)
         """
-        
-        # Convert dataframe to list of tuples
         data_tuples = [tuple(x) for x in forecast_data.to_numpy()]
         cursor.executemany(insert_query, data_tuples)
-        
         conn.commit()
-        logger.info("Forecast data successfully updated in database")
+        logger.info(f"User {user_id}: Forecast data successfully updated.")
         return True
-        
     except Error as e:
-        logger.error(f"Error during database update: {e}", exc_info=True)
+        logger.error(f"User {user_id}: Error during database update: {e}")
         conn.rollback()
         return False
     finally:
         cursor.close()
-        conn.close()
 
 def main():
-    """Main execution function."""
+    db_conn = get_db_connection()
+    if not db_conn:
+        sys.exit("Cannot proceed without a database connection.")
+
     try:
-        # Fetch historical sales data
-        db_conn = get_db_connection()
-        if not db_conn:
-            logger.error("Cannot proceed without database connection")
-            sys.exit(1)
-            return
-        
-        query = "SELECT product_id, timestamp, quantity FROM sales_transactions"
-        logger.info("Fetching historical sales data...")
-        historical_df = pd.read_sql(query, db_conn)
-        db_conn.close()
-
-        if historical_df.empty:
-            logger.warning("No historical sales data found in 'sales_transactions' table")
+        user_ids = get_all_user_ids(db_conn)
+        if not user_ids:
+            logger.warning("No active users found. Exiting.")
             return
 
-        logger.info(f"Loaded {len(historical_df)} historical sales records")
-        
-        # Train model and generate forecast
-        forecast_results = train_and_forecast(historical_df)
-        
-        # Update the database with new forecasts
-        if not forecast_results.empty:
-            update_forecast_db(forecast_results)
-        else:
-            logger.warning("No forecasts generated to save to database")
+        for user_id in user_ids:
+            logger.info(f"--- Starting forecast process for User ID: {user_id} ---")
+            historical_df = fetch_user_sales_data(db_conn, user_id)
+            if historical_df.empty:
+                logger.warning(f"User {user_id}: No sales data found. Skipping.")
+                continue
             
+            forecast_results = train_and_forecast(historical_df, user_id)
+            update_forecast_db(db_conn, forecast_results, user_id)
+            
+            # --- ADD THIS CALL ---
+            calculate_and_save_stockout_alerts(db_conn, user_id)
+            
+            logger.info(f"--- Finished forecast process for User ID: {user_id} ---")
+
     except Exception as e:
-        logger.error(f"Fatal error in main execution: {e}", exc_info=True)
+        logger.error(f"Fatal error in main execution loop: {e}", exc_info=True)
+    finally:
+        if db_conn and db_conn.is_connected():
+            db_conn.close()
 
 if __name__ == "__main__":
     main()

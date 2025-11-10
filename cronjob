@@ -1,1 +1,0 @@
-* * * * * /usr/local/bin/python /app/demand_forecaster.py >> /proc/1/fd/1 2>> /proc/1/fd/2

@@ -9,5 +9,8 @@ uvicorn[standard]
 kafka-python
 mysql-connector-python
 passlib==1.7.4
-bcrypt==4.1.2
+bcrypt==3.2.0
 python-jose[cryptography]
+cryptography==42.0.5
+mlxtend==0.23.0
+scikit-learn==1.4.2

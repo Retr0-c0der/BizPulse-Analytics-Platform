@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Connections - BizPulse</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+         <div class="header-content">
+            <div class="logo-section">
+                <a href="/dashboard" style="display: flex; align-items: center; gap: 1rem; text-decoration: none;">
+                    <svg class="header-logo" xmlns="http://www.w.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                    <h1>BizPulse</h1>
+                </a>
+            </div>
+            <div class="user-info">
+                 <a href="/dashboard" class="btn-logout" style="text-decoration:none;">Back to Dashboard</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="connections-container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Manage Data Connections</h2>
+            </div>
+            <div id="connections-list" style="padding: 1.5rem;">
+                <p>Loading your connections...</p>
+                <!-- Connections will be listed here -->
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Add New Connection</h2>
+            </div>
+            <form id="connection-form" style="padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="input-group" style="grid-column: 1 / -1;">
+                    <input type="text" id="connection_name" placeholder="Connection Name (e.g., 'Production DB')" required>
+                </div>
+                <div class="input-group">
+                     <select id="db_type" required>
+                        <option value="MySQL">MySQL</option>
+                        <option value="PostgreSQL" disabled>PostgreSQL (coming soon)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="db_host" placeholder="Host (e.g., 123.45.67.89)" required>
+                </div>
+                 <div class="input-group">
+                    <input type="number" id="db_port" placeholder="Port (e.g., 3306)" value="3306" required>
+                </div>
+                 <div class="input-group">
+                    <input type="text" id="db_name" placeholder="Database Name" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="db_user" placeholder="Username" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="db_password" placeholder="Password" required>
+                </div>
+                
+                <div style="grid-column: 1 / -1; margin-top: 1rem;">
+                    <button type="submit" class="login-button">
+                        <span class="button-text">Test & Save Connection</span>
+                    </button>
+                    <div id="form-message" class="error-message" style="margin-top: 1rem;"></div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/connections.js"></script>
+</body>
+</html>
