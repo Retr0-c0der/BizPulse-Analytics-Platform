@@ -58,15 +58,16 @@ def analyze_and_store_rules_for_user(conn, user_id):
         df_encoded = pd.DataFrame(te_ary, columns=te.columns_)
 
         # 4. Run Apriori and generate association rules
-        frequent_itemsets = apriori(df_encoded, min_support=0.01, use_colnames=True)
+        frequent_itemsets = apriori(df_encoded, min_support=0.001, use_colnames=True)
         if frequent_itemsets.empty:
             logger.warning(f"User {user_id}: No frequent itemsets found with current support level.")
             return
             
-        rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1.2)
+        rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1) # Lowered min_threshold
         
+        # DEMO CHANGE: Lowered confidence for more results
         # Filter for high-confidence, single-item rules
-        rules = rules[(rules['confidence'] > 0.5) & (rules['antecedents'].apply(lambda x: len(x) == 1)) & (rules['consequents'].apply(lambda x: len(x) == 1))]
+        rules = rules[(rules['confidence'] > 0.2) & (rules['antecedents'].apply(lambda x: len(x) == 1)) & (rules['consequents'].apply(lambda x: len(x) == 1))]
         if rules.empty:
             logger.info(f"User {user_id}: No high-confidence association rules found.")
             return
