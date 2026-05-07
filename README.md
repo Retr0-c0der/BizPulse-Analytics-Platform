@@ -151,7 +151,7 @@ Leave this terminal running.
 
 The system is now fully operational.
 
-1. Open your web browser and navigate to **`http://localhost:8000`**.
+1. Open your web browser and navigate to **`http://localhost:80`**.
 2. Log in with the default credentials:
    - **Username:** `testuser`
    - **Password:** `testpassword`
@@ -160,7 +160,7 @@ You will be redirected to the dashboard. The KPI cards and inventory table will 
 
 ## API Overview
 
-BizPulse exposes a REST API at `http://localhost:8000/api/`. Key endpoint groups:
+BizPulse exposes a REST API at `http://localhost:80/api/`. Key endpoint groups:
 
 | Endpoint Group | Description |
 | :--- | :--- |
@@ -172,7 +172,7 @@ BizPulse exposes a REST API at `http://localhost:8000/api/`. Key endpoint groups
 | `/api/reports` | CSV report downloads |
 | `/api/forecasts` | Demand forecast data per product |
 
-Full interactive API docs available at **`http://localhost:8000/docs`** (Swagger UI).
+Full interactive API docs available at **`http://localhost:80/docs`** (Swagger UI).
 
 ## How to Shut Down
 
@@ -208,14 +208,3 @@ BizPulse/
 ├── requirements.txt
 └── .env                     # (create this yourself — not committed)
 ```
-
-## Team
-
-Built as part of an academic project at **MIT ADT University** under the guidance of **Prof. Shweta Yadav**.
-
-| Name | Role |
-| :--- | :--- |
-| AntiGen | Backend, Data Pipeline, Forecasting |
-| Aanaya | Frontend, UI/UX |
-| Tanay | Database, API Integration |
-| Shlok | DevOps, Docker, Deployment |
