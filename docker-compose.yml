@@ -1,4 +1,4 @@
-# docker-compose.yml (FINAL - Including Website AND Metabase)
+# docker-compose.yml (FINAL - Nginx + Website + Metabase)
 
 services:
   zookeeper:
@@ -77,15 +77,15 @@ services:
     env_file:
       - .env
     restart: on-failure
-  
-  # --- CUSTOM WEBSITE SERVICE ---
+
   website:
     build:
       context: .
       dockerfile: website.Dockerfile
     container_name: website
-    ports:
-      - "8000:8000"
+    # No longer exposed directly — Nginx is the public entrypoint
+    expose:
+      - "8000"
     networks:
       - bizpulse-net
     depends_on:
@@ -93,7 +93,25 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    volumes:
+      - ./:/app
     restart: on-failure
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx
+    networks:
+      - bizpulse-net
+    ports:
+      - "80:80"
+      # HTTPS: uncomment these two lines and add the certbot volume below
+      # - "443:443"
+      # volumes: - ./certbot/conf:/etc/letsencrypt - ./certbot/www:/var/www/certbot
+    depends_on:
+      - website
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
 
 networks:
   bizpulse-net:

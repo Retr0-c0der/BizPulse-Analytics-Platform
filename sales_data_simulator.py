@@ -6,7 +6,7 @@ import time
 import logging
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any, cast
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
 import mysql.connector
@@ -57,7 +57,6 @@ class SalesDataSimulator:
         self.errors = 0
         
         # --- DEMO CHANGE: Set this to the ID of the user you will demo with ---
-        # Note: A new user created via the UI will likely be ID 2 (if 'testuser' is 1)
         self.demo_user_id = 1
         logger.info(f"--- SIMULATOR IS CONFIGURED FOR USER_ID: {self.demo_user_id} ---")
         # --- END OF DEMO CHANGE ---
@@ -90,8 +89,9 @@ class SalesDataSimulator:
                 else:
                     logger.critical("Max retries reached. Exiting.")
                     raise
+        raise RuntimeError("Failed to connect to Kafka")
     
-    def get_db_connection(self) -> Optional[mysql.connector.connection.MySQLConnection]:
+    def get_db_connection(self) -> Optional[Any]:
         """Creates and returns a MySQL database connection."""
         try:
             connection = mysql.connector.connect(
@@ -119,7 +119,7 @@ class SalesDataSimulator:
             cursor = db_conn.cursor()
             query = "SELECT product_id FROM inventory WHERE stock_level > 0 AND user_id = %s"
             cursor.execute(query, (self.demo_user_id,))
-            in_stock = [row[0] for row in cursor.fetchall()]
+            in_stock =[cast(str, row[0]) for row in cursor.fetchall()]
             
             if not in_stock:
                 logger.warning("⚠️  No products in stock for user, sales will be paused until next restock.")
@@ -222,6 +222,8 @@ class SalesDataSimulator:
     
     def send_record(self, record: Dict) -> bool:
         """Sends a record to Kafka with error handling."""
+        if not self.producer:
+            return False
         try:
             future = self.producer.send(KAFKA_TOPIC, value=record)
             future.get(timeout=10)
@@ -246,7 +248,8 @@ class SalesDataSimulator:
                 total_records += 1
             if day % 5 == 0:
                 logger.info(f"✓ Generated data up to {day} days ago ({total_records} records)")
-        self.producer.flush()
+        if self.producer:
+            self.producer.flush()
         logger.info(f"\n✅ Historical data complete: {total_records} records generated")
         logger.info(f"⏳ Waiting 10 seconds for stream processor to catch up...\n")
         time.sleep(10)

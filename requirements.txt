@@ -1,4 +1,4 @@
-# requirements.txt (FINAL CLEANED VERSION)
+# requirements.txt
 pandas==2.2.2
 prophet==1.1.5
 numpy==1.26.4
@@ -14,3 +14,4 @@ python-jose[cryptography]
 cryptography==42.0.5
 mlxtend==0.23.0
 scikit-learn==1.4.2
+reportlab==4.2.2

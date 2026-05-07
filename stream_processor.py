@@ -9,15 +9,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- Configuration ---
 KAFKA_BROKER = os.getenv('KAFKA_BROKER', 'kafka:9092')
 KAFKA_TOPIC = 'bizpulse_sales_stream'
 DB_HOST = os.getenv('DB_HOST', 'mysql_db')
 DB_DATABASE = os.getenv('DB_DATABASE')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
-# --- NEW: Define the default user for all incoming data ---
-# DEFAULT_USER_ID = 1 
 
 def get_kafka_consumer(topic):
     while True:
@@ -56,14 +53,12 @@ def get_db_connection():
 def process_message(message, db_conn):
     """Processes a single message from Kafka and updates the database."""
     data = message.value
-    # --- NEW: Get user_id from the message ---
     user_id = data.get('user_id')
     product_id = data.get('product_id')
     quantity = data.get('quantity')
     transaction_type = data.get('transaction_type')
     timestamp = data.get('timestamp')
 
-    # Basic validation
     if not all([user_id, product_id, quantity, transaction_type, timestamp]):
         print(f"🔥 Invalid message received, skipping: {data}")
         return
@@ -71,35 +66,63 @@ def process_message(message, db_conn):
     cursor = None
     try:
         cursor = db_conn.cursor()
-        
+
         if transaction_type == 'SALE':
-            insert_sale_query = """
-            INSERT INTO sales_transactions (user_id, product_id, quantity, timestamp)
-            VALUES (%s, %s, %s, %s)
-            """
-            cursor.execute(insert_sale_query, (user_id, product_id, quantity, timestamp))
-            
-            update_inventory_query = """
-            INSERT INTO inventory (user_id, product_id, stock_level, last_updated)
-            VALUES (%s, %s, -%s, %s)
-            ON DUPLICATE KEY UPDATE stock_level = stock_level - %s, last_updated = %s;
-            """
-            cursor.execute(update_inventory_query, (user_id, product_id, quantity, timestamp, quantity, timestamp))
-            
-            print(f"Processed SALE for User {user_id}: Product {product_id}, Quantity: {quantity}")
+            # 1. Log the sale transaction
+            cursor.execute("""
+                INSERT INTO sales_transactions (user_id, product_id, quantity, timestamp)
+                VALUES (%s, %s, %s, %s)
+            """, (user_id, product_id, quantity, timestamp))
+
+            # 2. Update inventory table
+            cursor.execute("""
+                UPDATE inventory 
+                SET stock_level = GREATEST(0, stock_level - %s), last_updated = %s
+                WHERE user_id = %s AND product_id = %s
+            """, (quantity, timestamp, user_id, product_id))
+
+            # 3. Sync products table so it stays in step with inventory
+            cursor.execute("""
+                UPDATE products
+                SET current_stock = GREATEST(0, current_stock - %s)
+                WHERE user_id = %s AND sku = %s
+            """, (quantity, user_id, product_id))
+
+            # 4. Add to Stock Movements Audit Log (negative quantity for sales)
+            cursor.execute("""
+                INSERT INTO stock_movements (user_id, sku, product_name, movement_type, quantity, note, performed_by, created_at)
+                SELECT %s, %s, product_name, 'out', %s, 'Automated Sale (Simulator)', 'System', %s
+                FROM products WHERE user_id = %s AND sku = %s
+            """, (user_id, product_id, -quantity, timestamp, user_id, product_id))
+
+            print(f"Processed SALE for User {user_id}: Product {product_id}, Qty: -{quantity}")
 
         elif transaction_type == 'INVENTORY_UPDATE':
-            update_inventory_query = """
-            INSERT INTO inventory (user_id, product_id, stock_level, last_updated)
-            VALUES (%s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE stock_level = stock_level + %s, last_updated = %s;
-            """
-            cursor.execute(update_inventory_query, (user_id, product_id, quantity, timestamp, quantity, timestamp))
-            
-            print(f"Processed INVENTORY_UPDATE for User {user_id}: Product {product_id}, Quantity: {quantity}")
-            
+            # 1. Update inventory table
+            cursor.execute("""
+                UPDATE inventory 
+                SET stock_level = stock_level + %s, last_updated = %s
+                WHERE user_id = %s AND product_id = %s
+            """, (quantity, timestamp, user_id, product_id))
+
+            # 2. Sync products table
+            cursor.execute("""
+                UPDATE products
+                SET current_stock = current_stock + %s
+                WHERE user_id = %s AND sku = %s
+            """, (quantity, user_id, product_id))
+
+            # 3. Add to Stock Movements Audit Log
+            cursor.execute("""
+                INSERT INTO stock_movements (user_id, sku, product_name, movement_type, quantity, note, performed_by, created_at)
+                SELECT %s, %s, product_name, 'in', %s, 'Automated Restock (Simulator)', 'System', %s
+                FROM products WHERE user_id = %s AND sku = %s
+            """, (user_id, product_id, quantity, timestamp, user_id, product_id))
+
+            print(f"Processed INVENTORY_UPDATE for User {user_id}: Product {product_id}, Qty: +{quantity}")
+
         db_conn.commit()
-        
+
     except Error as e:
         print(f"🔥 Database Error: {e}")
         if db_conn:
@@ -111,16 +134,15 @@ def process_message(message, db_conn):
 if __name__ == "__main__":
     consumer = get_kafka_consumer(KAFKA_TOPIC)
     db_connection = get_db_connection()
-    
-    print("🚀 Stream processor is running (Tenant-Aware Mode)... waiting for messages.")
-    
+
+    print("🚀 Stream processor running (Tenant-Aware Mode)... waiting for messages.")
+
     try:
         for message in consumer:
             if not db_connection.is_connected():
                 print("Database connection lost. Reconnecting...")
                 db_connection.close()
                 db_connection = get_db_connection()
-            
             process_message(message, db_connection)
     except KeyboardInterrupt:
         print("\n🛑 Stream processor stopped by user.")

@@ -1,0 +1,11 @@
+product_id,category,mape,mase,stockouts_fixed,stockouts_forecast,stockout_reduction
+PROD_0001,Electronics,99.48,0.997,0,0,100.0
+PROD_0002,Electronics,91.16,0.604,0,4,100.0
+PROD_0003,Apparel,93.22,0.796,0,0,100.0
+PROD_0004,Apparel,99.23,0.682,0,0,100.0
+PROD_0005,Grocery,77.73,0.725,0,0,100.0
+PROD_0006,Grocery,100.0,0.52,0,0,100.0
+PROD_0007,Home & Garden,97.62,0.559,0,0,100.0
+PROD_0008,Home & Garden,98.98,0.752,0,23,100.0
+PROD_0009,Sporting Goods,99.53,0.587,0,0,100.0
+PROD_0010,Sporting Goods,95.63,0.603,0,3,100.0

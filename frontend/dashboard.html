@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BizPulse Dashboard - Real-Time Business Intelligence</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -25,22 +25,12 @@
         </div>
     </header>
 
-    <div id="empty-state-container" style="display: none;">
-        <h2>Welcome to Your BizPulse Dashboard!</h2>
-        <p>Your account is ready. To see the platform in action, generate a set of sample sales and inventory data.</p>
-        <button id="generate-data-button" class="login-button" style="max-width: 300px; margin: 0 auto;"><span class="button-text">Generate Demo Data</span></button>
-        <p id="generation-status"></p>
-    </div>
 
+    <!-- KPI Display Grid -->
     <div class="kpi-grid">
         <div class="kpi-card">
             <div class="kpi-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 7h-9"/>
-                    <path d="M14 17H5"/>
-                    <circle cx="17" cy="17" r="3"/>
-                    <circle cx="7" cy="7" r="3"/>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
             </div>
             <div class="kpi-content">
                 <h3>Total Products</h3>
@@ -50,11 +40,7 @@
         
         <div class="kpi-card">
             <div class="kpi-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                    <line x1="12" y1="22.08" x2="12" y2="12"/>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
             </div>
             <div class="kpi-content">
                 <h3>Total Units in Stock</h3>
@@ -64,10 +50,7 @@
         
         <div class="kpi-card">
             <div class="kpi-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="1" x2="12" y2="23"/>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
             <div class="kpi-content">
                 <h3>Sales (Last 24h)</h3>
@@ -77,11 +60,7 @@
         
         <div class="kpi-card">
             <div class="kpi-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                    <line x1="12" y1="9" x2="12" y2="13"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
             <div class="kpi-content">
                 <h3>Low Stock Items</h3>
@@ -90,23 +69,57 @@
         </div>
     </div>
 
+    <!-- NEW: Quick Actions Grid -->
+    <div class="action-grid">
+        <div class="action-card" onclick="openAddProduct()">
+            <div class="icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+            <h3>Add Product</h3>
+            <p>Create new item</p>
+        </div>
+
+        <div class="action-card" onclick="openModal('stock-adjust-modal')">
+            <div class="icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </div>
+            <h3>Adjust Stock</h3>
+            <p>Log movements</p>
+        </div>
+
+        <div class="action-card" onclick="openModal('create-po-modal')">
+            <div class="icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <h3>Create PO</h3>
+            <p>Order supplies</p>
+        </div>
+
+        <div class="action-card" onclick="openModal('bulk-import-modal')">
+            <div class="icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </div>
+            <h3>Bulk Import</h3>
+            <p>Upload CSV</p>
+        </div>
+    </div>
+
     <main class="container-wrapper">
         <nav class="tabs">
             <button class="tab-link active" data-tab="dashboard-tab">Dashboard</button>
-            <button class="tab-link" data-tab="forecast-analytics-tab">Forecasts & Analytics</button>
+            <button class="tab-link" data-tab="inventory-ops-tab">Inventory Management</button> 
+            <button class="tab-link" data-tab="supply-chain-tab">Supply Chain</button>
+            <button class="tab-link" data-tab="forecast-analytics-tab">Analytics & Forecasts</button>
+            <button class="tab-link" data-tab="reports-tab">Reports</button>
         </nav>
 
-        <!-- Tab 1: Dashboard (Alerts & Inventory) -->
+        <!-- Tab 1: Dashboard (Alerts & Inventory Overview) -->
         <div id="dashboard-tab" class="tab-content active">
             <div class="container" style="grid-template-columns: 1fr 1fr; align-items: stretch;">
                 <div class="card card-full-height" id="alerts-card">
                     <div class="card-header">
                         <h2>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                                <line x1="12" y1="9" x2="12" y2="13"/>
-                                <line x1="12" y1="17" x2="12.01" y2="17"/>
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                             Actionable Alerts
                         </h2>
                     </div>
@@ -118,10 +131,7 @@
                 <div class="card card-full-height" id="inventory-table-card">
                     <div class="card-header">
                         <h2>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                             Inventory Status
                         </h2>
                     </div>
@@ -129,24 +139,12 @@
                         <table id="inventory-table">
                             <thead>
                                 <tr>
-                                    <th onclick="sortTable(0)">
-                                        Product ID
-                                        <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M12 5v14M19 12l-7 7-7-7"/>
-                                        </svg>
-                                    </th>
-                                    <th onclick="sortTable(1)">
-                                        Stock Level
-                                        <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M12 5v14M19 12l-7 7-7-7"/>
-                                        </svg>
-                                    </th>
+                                    <th onclick="sortTable(0)">Product ID <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></th>
+                                    <th onclick="sortTable(1)">Stock Level <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colspan="2" class="loading-row">Loading inventory data...</td>
-                                </tr>
+                                <tr><td colspan="2" class="loading-row">Loading inventory data...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -154,24 +152,162 @@
             </div>
         </div>
 
-        <!-- Tab 2: Forecasts & Analytics -->
+        <!-- Tab 2: Inventory Management (Full CRUD) -->
+        <div id="inventory-ops-tab" class="tab-content">
+            <div class="inventory-wrapper">
+                <!-- Control Bar (Reduced - removed redundant buttons) -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="inventory-controls">
+                        <div class="search-filters" style="width: 100%;">
+                            <input type="text" id="search-sku" placeholder="Search by SKU or Name..." class="search-input">
+                            <select id="filter-category" class="filter-select">
+                                <option value="all">All Categories</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="home">Home & Garden</option>
+                                <option value="apparel">Apparel</option>
+                                <option value="sports">Sports & Outdoors</option>
+                            </select>
+                            <select id="filter-warehouse" class="filter-select">
+                                <option value="all">All Warehouses</option>
+                                <option value="main">Main Warehouse</option>
+                                <option value="store">Storefront</option>
+                                <option value="backup">Backup Storage</option>
+                            </select>
+                            <select id="filter-status" class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="low">Low Stock</option>
+                                <option value="out">Out of Stock</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Master Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Product Master List</h2>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn-sm" onclick="exportInventory()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="product-master-table">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Product Name</th>
+                                    <th>Category</th>
+                                    <th>Warehouse</th>
+                                    <th>Cost Price</th>
+                                    <th>Sell Price</th>
+                                    <th>Current Stock</th>
+                                    <th>Min Stock</th>
+                                    <th>Total Value</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="product-master-body">
+                                <tr><td colspan="11" class="loading-row">Loading products...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination">
+                        <button class="btn-sm" id="prev-page" disabled>Previous</button>
+                        <span id="page-info">Page 1 of 1</span>
+                        <button class="btn-sm" id="next-page">Next</button>
+                    </div>
+                </div>
+
+                <!-- Stock Movement History -->
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            Recent Stock Movements
+                        </h2>
+                    </div>
+                    <div class="table-container" style="max-height: 400px;">
+                        <table id="stock-movements-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>SKU</th>
+                                    <th>Product</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>User</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock-movements-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Supply Chain Management -->
+        <div id="supply-chain-tab" class="tab-content">
+            <div class="container">
+                <!-- Purchase Orders Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                            Purchase Orders
+                        </h2>
+                        <button class="btn-sm" onclick="openModal('create-po-modal')">+ Create PO</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="po-table">
+                            <thead>
+                                <tr>
+                                    <th>PO #</th>
+                                    <th>Supplier</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="po-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Supplier Management Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Active Suppliers
+                        </h2>
+                        <button class="btn-sm" onclick="openModal('add-supplier-modal')">+ Add Supplier</button>
+                    </div>
+                    <div class="list-container" id="supplier-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Analytics & Forecasts -->
         <div id="forecast-analytics-tab" class="tab-content">
             <div class="container">
                 <div class="card" id="forecast-card">
                     <div class="card-header">
                         <h2>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
-                                <path d="M22 12A10 10 0 0 0 12 2v10z"/>
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
                             30-Day Demand Forecast
                         </h2>
                     </div>
                     <div class="forecast-selector-wrapper">
                         <label for="product-selector">Select Product:</label>
-                        <select id="product-selector">
-                            <option value="">Loading products...</option>
-                        </select>
+                        <select id="product-selector"><option value="">Loading products...</option></select>
                     </div>
                     <div id="forecast-chart-container" class="chart-container">
                         <canvas id="forecast-chart"></canvas>
@@ -181,10 +317,7 @@
                 <div class="card" id="insights-card">
                     <div class="card-header">
                         <h2>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="3"/>
-                                <path d="M12 1v6m0 6v6m-5.5-5.5 4.5-4.5m0 9 4.5-4.5m5.5.5h-6m-6 0H1m10.5 5.5-4.5 4.5m9 0-4.5-4.5"/>
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m-5.5-5.5 4.5-4.5m0 9 4.5-4.5m5.5.5h-6m-6 0H1m10.5 5.5-4.5 4.5m9 0-4.5-4.5"/></svg>
                             Customer Insights
                         </h2>
                     </div>
@@ -194,7 +327,333 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tab 5: Reports -->
+        <div id="reports-tab" class="tab-content">
+            <div class="inventory-wrapper">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            Generate Reports
+                        </h2>
+                    </div>
+                    <div style="padding: 2rem;">
+                        <div class="reports-grid">
+                            <div class="report-card">
+                                <h3>Inventory Valuation Report</h3>
+                                <p>Current value of all inventory items</p>
+                                <button class="btn-primary">Generate</button>
+                            </div>
+                            <div class="report-card">
+                                <h3>Stock Movement Report</h3>
+                                <p>Track all stock ins and outs</p>
+                                <button class="btn-primary">Generate</button>
+                            </div>
+                            <div class="report-card">
+                                <h3>Low Stock Alert Report</h3>
+                                <p>Items below minimum threshold</p>
+                                <button class="btn-primary">Generate</button>
+                            </div>
+                            <div class="report-card">
+                                <h3>Sales Performance</h3>
+                                <p>Top selling products analysis</p>
+                                <button class="btn-primary">Generate</button>
+                            </div>
+                            <div class="report-card">
+                                <h3>Business Summary (PDF)</h3>
+                                <p>KPIs, low-stock table &amp; top sellers</p>
+                                <button class="btn-primary">Generate PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <!-- ==================== MODALS (MOVED TO BOTTOM) ==================== -->
+
+    <!-- MODAL: Add/Edit Product -->
+    <div id="product-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="product-modal-title">Add New Product</h3>
+                <button class="close-modal" onclick="closeModal('product-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="product-form">
+                    <input type="hidden" id="product-id" value="">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>SKU (Stock Keeping Unit) *</label>
+                            <input type="text" id="product-sku" placeholder="e.g. TECH-001" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Product Name *</label>
+                            <input type="text" id="product-name" placeholder="e.g. Wireless Mouse" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Category *</label>
+                            <select id="product-category" required>
+                                <option value="">Select Category</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="home">Home & Garden</option>
+                                <option value="apparel">Apparel</option>
+                                <option value="sports">Sports & Outdoors</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Warehouse Location *</label>
+                            <select id="product-warehouse" required>
+                                <option value="">Select Warehouse</option>
+                                <option value="main">Main Warehouse</option>
+                                <option value="store">Storefront</option>
+                                <option value="backup">Backup Storage</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Cost Price ($) *</label>
+                            <input type="number" id="product-cost" step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Selling Price ($) *</label>
+                            <input type="number" id="product-price" step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Initial Stock Quantity *</label>
+                            <input type="number" id="product-stock" min="0" placeholder="0" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Minimum Stock Level *</label>
+                            <input type="number" id="product-min-stock" min="0" placeholder="10" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Supplier (Optional)</label>
+                        <select id="product-supplier">
+                            <option value="">No Supplier</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Description (Optional)</label>
+                        <textarea id="product-description" rows="3" placeholder="Product description..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('product-modal')">Cancel</button>
+                <button class="btn-primary" onclick="saveProduct()">Save Product</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Stock Adjustment -->
+    <div id="stock-adjust-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Stock Adjustment</h3>
+                <button class="close-modal" onclick="closeModal('stock-adjust-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="adjust-form">
+                    <div class="input-group">
+                        <label>Select Product *</label>
+                        <select id="adjust-product-sku" required>
+                            <option value="">Choose a product...</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Current Stock Level</label>
+                        <input type="text" id="adjust-current-stock" readonly style="background: #f5f5f5;">
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Adjustment Type *</label>
+                            <select id="adjust-type" required>
+                                <option value="">Select Type</option>
+                                <option value="in">Stock In</option>
+                                <option value="out">Stock Out</option>
+                                <option value="loss">Loss/Damage</option>
+                                <option value="return">Customer Return</option>
+                                <option value="audit">Audit Correction</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Quantity *</label>
+                            <input type="number" id="adjust-quantity" min="1" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Reference Number</label>
+                        <input type="text" id="adjust-reference" placeholder="e.g. PO-12345">
+                    </div>
+                    <div class="input-group">
+                        <label>Reason / Note *</label>
+                        <textarea id="adjust-note" rows="3" placeholder="Describe reason..." required></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>New Stock Level (Preview)</label>
+                        <input type="text" id="adjust-new-stock" readonly style="background: #f5f5f5; font-weight: bold;">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('stock-adjust-modal')">Cancel</button>
+                <button class="btn-primary" onclick="confirmStockAdjustment()">Confirm Adjustment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Bulk Import -->
+    <div id="bulk-import-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Bulk Import Products</h3>
+                <button class="close-modal" onclick="closeModal('bulk-import-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="padding: 1rem; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 4px; margin-bottom: 1rem;">
+                    <p style="margin: 0; color: #0c4a6e; font-size: 0.875rem;">
+                        <strong>Format:</strong> Upload a CSV file with columns: SKU, Product Name, Category, Warehouse, Cost Price, Sell Price, Initial Stock, Min Stock
+                    </p>
+                </div>
+                <form id="bulk-import-form">
+                    <div class="input-group">
+                        <label>Upload CSV File *</label>
+                        <button type="button" class="btn-sm" style="margin-bottom:.5rem;" onclick="downloadBulkTemplate()">
+                        ↓ Download CSV Template
+                        </button>
+                        <input type="file" id="bulk-file" accept=".csv" required>
+                    </div>
+                    <div class="input-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="bulk-skip-duplicates">
+                            Skip duplicate SKUs
+                        </label>
+                    </div>
+                </form>
+                <div id="bulk-import-preview" style="display: none; margin-top: 1rem;">
+                    <h4>Preview</h4>
+                    <div class="table-container" style="max-height: 200px;">
+                        <table id="bulk-preview-table">
+                            <thead id="bulk-preview-header"></thead>
+                            <tbody id="bulk-preview-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('bulk-import-modal')">Cancel</button>
+                <button class="btn-primary" onclick="processBulkImport()">Import Products</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Create Purchase Order -->
+    <div id="create-po-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Create Purchase Order</h3>
+                <button class="close-modal" onclick="closeModal('create-po-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="po-form">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Supplier *</label>
+                            <select id="po-supplier" required>
+                                <option value="">Select Supplier</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Expected Delivery Date *</label>
+                            <input type="date" id="po-delivery-date" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Add Items</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <select id="po-product" style="flex: 1;">
+                                <option value="">Select Product</option>
+                            </select>
+                            <input type="number" id="po-quantity" placeholder="Qty" min="1" style="width: 100px;">
+                            <button type="button" class="btn-secondary" onclick="addPOItem()">Add</button>
+                        </div>
+                    </div>
+                    <div id="po-items-container" style="margin-top: 1rem;">
+                        <table id="po-items-table" style="width: 100%;">
+                            <thead>
+                                <tr><th>SKU</th><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th><th></th></tr>
+                            </thead>
+                            <tbody id="po-items-body">
+                                <tr><td colspan="6" style="text-align: center; color: #999;">No items added yet</td></tr>
+                            </tbody>
+                            <tfoot>
+                                <tr><td colspan="4" style="text-align: right; font-weight: bold;">Total:</td><td id="po-total" style="font-weight: bold;">$0.00</td><td></td></tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('create-po-modal')">Cancel</button>
+                <button class="btn-primary" onclick="submitPurchaseOrder()">Create PO</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Add Supplier -->
+    <div id="add-supplier-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Supplier</h3>
+                <button class="close-modal" onclick="closeModal('add-supplier-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="supplier-form">
+                    <div class="input-group">
+                        <label>Supplier Name *</label>
+                        <input type="text" id="supplier-name" placeholder="e.g. TechSupply Co." required>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Contact Person</label>
+                            <input type="text" id="supplier-contact" placeholder="John Doe">
+                        </div>
+                        <div class="input-group">
+                            <label>Email</label>
+                            <input type="email" id="supplier-email" placeholder="supplier@example.com">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Phone</label>
+                            <input type="tel" id="supplier-phone" placeholder="+1 234 567 8900">
+                        </div>
+                        <div class="input-group">
+                            <label>Lead Time (Days)</label>
+                            <input type="number" id="supplier-lead-time" min="0" placeholder="7">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Address</label>
+                        <textarea id="supplier-address" rows="3" placeholder="Full address..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('add-supplier-modal')">Cancel</button>
+                <button class="btn-primary" onclick="saveSupplier()">Save Supplier</button>
+            </div>
+        </div>
+    </div>
 
     <script src="/static/app.js"></script>
 </body>

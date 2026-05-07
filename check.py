@@ -1,0 +1,11 @@
+import mysql.connector
+conn = mysql.connector.connect(host='127.0.0.1', database='bizpulse_db', user='bizpulse_user', password='userpassword', port=3306)
+cursor = conn.cursor()
+cursor.execute('DESCRIBE sales_transactions')
+print('Columns:', [row[0] for row in cursor.fetchall()])
+cursor.execute('SELECT MIN(quantity), MAX(quantity), AVG(quantity), COUNT(*) FROM sales_transactions')
+print('Quantity stats:', cursor.fetchone())
+cursor.execute('SELECT * FROM sales_transactions ORDER BY quantity DESC LIMIT 5')
+print('Highest quantity rows:')
+for row in cursor.fetchall(): print(row)
+conn.close()
