@@ -850,12 +850,16 @@ def report_summary_pdf(
     """, (user_id,))
     low_stock_items = cursor.fetchall()
  
-    # Fetch top 5 sales performers
+    # Fetch top 5 sales performers (Updated to get Product Name)
     cursor.execute("""
-        SELECT product_id, SUM(quantity) AS total_sold, COUNT(*) AS transactions
-        FROM sales_transactions
-        WHERE user_id = %s
-        GROUP BY product_id
+        SELECT s.product_id, 
+               COALESCE(p.product_name, s.product_id) AS product_name,
+               SUM(s.quantity) AS total_sold, 
+               COUNT(*) AS transactions
+        FROM sales_transactions s
+        LEFT JOIN products p ON s.user_id = p.user_id AND s.product_id = p.sku
+        WHERE s.user_id = %s
+        GROUP BY s.product_id, p.product_name
         ORDER BY total_sold DESC
         LIMIT 5
     """, (user_id,))
@@ -950,9 +954,10 @@ def report_summary_pdf(
     # Top sellers table
     elements.append(Paragraph("Top 5 Sales Performers", section_style))
     if top_sellers:
-        ts_data = [['Product ID', 'Total Units Sold', 'Transactions']]
+         # Changed 'Product ID' to 'Product Name'
+        ts_data = [['Product Name', 'Total Units Sold', 'Transactions']]
         for item in top_sellers:
-            ts_data.append([item['product_id'], str(item['total_sold']), str(item['transactions'])])
+            ts_data.append([item['product_name'], str(item['total_sold']), str(item['transactions'])])
         ts_table = Table(ts_data, colWidths=[6*cm, 5*cm, 5*cm])
         ts_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),

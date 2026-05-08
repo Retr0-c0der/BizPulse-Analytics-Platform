@@ -3,6 +3,7 @@ import os
 import sys
 import logging
 import argparse
+from typing import Optional, Dict, Any
 import pandas as pd
 import mysql.connector
 from mysql.connector import Error
@@ -28,7 +29,7 @@ if not ENCRYPTION_KEY:
 cipher_suite = Fernet(ENCRYPTION_KEY.encode())
 
 # --- Helper Functions ---
-def decrypt_password(encrypted_password: str) -> str:
+def decrypt_password(encrypted_password: str) -> Optional[str]:
     try:
         return cipher_suite.decrypt(encrypted_password.encode()).decode()
     except InvalidToken:
@@ -43,13 +44,15 @@ def get_internal_db_connection():
         logger.error(f"Failed to connect to internal BizPulse DB: {e}")
         return None
 
-def fetch_connection_details(internal_conn, user_id: int):
+def fetch_connection_details(internal_conn, user_id: int) -> Optional[Dict[str, Any]]:
     cursor = internal_conn.cursor(dictionary=True)
     query = "SELECT * FROM database_connections WHERE user_id = %s AND is_valid = TRUE LIMIT 1"
     cursor.execute(query, (user_id,))
     details = cursor.fetchone()
     cursor.close()
-    return details
+    if isinstance(details, dict):
+        return details
+    return None
 
 def sync_data_for_user(user_id: int):
     logger.info(f"--- Starting data sync for User ID: {user_id} ---")
@@ -66,16 +69,16 @@ def sync_data_for_user(user_id: int):
             return
 
         # 2. Decrypt the password
-        db_pass = decrypt_password(conn_details['encrypted_db_password'])
+        db_pass = decrypt_password(str(conn_details['encrypted_db_password']))
         if not db_pass:
             return
 
         # 3. Connect to the user's external database
         logger.info(f"Connecting to external DB for user {user_id} at {conn_details['db_host']}")
         external_conn = mysql.connector.connect(
-            host=conn_details['db_host'], port=conn_details['db_port'],
-            user=conn_details['db_user'], password=db_pass,
-            database=conn_details['db_name']
+            host=str(conn_details['db_host']), port=int(conn_details['db_port']),
+            user=str(conn_details['db_user']), password=db_pass,
+            database=str(conn_details['db_name'])
         )
         logger.info("External DB connection successful.")
 
@@ -88,24 +91,45 @@ def sync_data_for_user(user_id: int):
         external_conn.close()
 
         # 5. Save the data to our internal DB
+        cursor = internal_conn.cursor()
+        
+        # --- Handle Sales Data ---
         if not sales_df.empty:
             sales_df['user_id'] = user_id
-            inventory_df['user_id'] = user_id
-            # This is a simple "truncate and load" strategy for now.
-            cursor = internal_conn.cursor()
-            logger.info("Clearing old sales and inventory data for user.")
+            logger.info("Clearing old sales data for user.")
             cursor.execute("DELETE FROM sales_transactions WHERE user_id = %s", (user_id,))
-            cursor.execute("DELETE FROM inventory WHERE user_id = %s", (user_id,))
             
-            # Insert new data
-            sales_tuples = [tuple(x) for x in sales_df[['user_id', 'product_id', 'quantity', 'timestamp']].to_numpy()]
-            inventory_tuples = [tuple(x) for x in inventory_df[['user_id', 'product_id', 'stock_level', 'last_updated']].to_numpy()]
+            sales_tuples =[tuple(x) for x in sales_df[['user_id', 'product_id', 'quantity', 'timestamp']].to_numpy()]
+            cursor.executemany(
+                "INSERT INTO sales_transactions (user_id, product_id, quantity, timestamp) VALUES (%s, %s, %s, %s)", 
+                sales_tuples
+            )
+
+        # --- Handle Inventory Data ---
+        if not inventory_df.empty:
+            inventory_df['user_id'] = user_id
+            logger.info("Resetting and updating inventory data in the products table.")
             
-            cursor.executemany("INSERT INTO sales_transactions (user_id, product_id, quantity, timestamp) VALUES (%s, %s, %s, %s)", sales_tuples)
-            cursor.executemany("INSERT INTO inventory (user_id, product_id, stock_level, last_updated) VALUES (%s, %s, %s, %s)", inventory_tuples)
-            internal_conn.commit()
-            logger.info("Successfully synced data into BizPulse DB.")
-            cursor.close()
+            # Zero out current stock instead of deleting from a view
+            cursor.execute("UPDATE products SET current_stock = 0 WHERE user_id = %s", (user_id,))
+            
+            # Provide a fallback product_name since it's a required field in `products`
+            inventory_df['product_name'] = 'Ext Prod ' + inventory_df['product_id'].astype(str)
+            inventory_tuples =[tuple(x) for x in inventory_df[['user_id', 'product_id', 'product_name', 'stock_level', 'last_updated']].to_numpy()]
+            
+            # UPSERT into the products table
+            upsert_query = """
+                INSERT INTO products (user_id, sku, product_name, current_stock, updated_at) 
+                VALUES (%s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                    current_stock = VALUES(current_stock),
+                    updated_at = VALUES(updated_at)
+            """
+            cursor.executemany(upsert_query, inventory_tuples)
+            
+        internal_conn.commit()
+        logger.info("Successfully synced data into BizPulse DB.")
+        cursor.close()
 
     except Error as e:
         logger.error(f"A database error occurred during sync for user {user_id}: {e}")

@@ -48,6 +48,22 @@ services:
       timeout: 5s
       retries: 5
 
+     # --- DEMO EXTERNAL DATABASE ---
+  external-db:
+    image: mysql:8.0
+    container_name: external-db
+    networks:
+      - bizpulse-net
+    ports:
+      - "3307:3306" # Mapped to 3307 on your host so it doesn't conflict
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: external_biz_db
+      MYSQL_USER: ext_user
+      MYSQL_PASSWORD: ext_password
+    volumes:
+      - external-db-data:/var/lib/mysql
+
   stream_processor:
     build:
       context: .
@@ -119,3 +135,4 @@ networks:
 
 volumes:
   mysql-data:
+  external-db-data:

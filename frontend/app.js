@@ -239,19 +239,49 @@ window.dismissAlert = async function (alertId, token) {
 async function fetchInsights(token) {
     const listContainer = document.getElementById('insights-list');
     if (!listContainer) return;
-    const res = await apiFetch('/api/insights/frequently-bought-together', token);
-    const rules = await res.json();
-    if (rules.length === 0) {
-        listContainer.innerHTML = '<p style="padding:1rem;text-align:center;">Not enough data yet.</p>';
-        return;
+    
+    try {
+        // Fetch both insights and products simultaneously to map SKUs to Names
+        const [rulesRes, productsRes] = await Promise.all([
+            apiFetch('/api/insights/frequently-bought-together', token),
+            apiFetch('/api/products', token)
+        ]);
+        
+        const rules = await rulesRes.json();
+        const products = await productsRes.json();
+        
+        // Build a lookup dictionary: SKU -> Product Name
+        const nameMap = {};
+        products.forEach(p => {
+            nameMap[p.sku] = p.product_name;
+        });
+        
+        // Helper to translate SKUs to Names (handles comma-separated lists too)
+        const getProductName = (skuString) => {
+            if (!skuString) return skuString;
+            return skuString.toString().split(',').map(s => {
+                const cleanSku = s.trim();
+                return nameMap[cleanSku] || cleanSku; // fallback to SKU if name isn't found
+            }).join(', ');
+        };
+
+        if (rules.length === 0) {
+            listContainer.innerHTML = '<p style="padding:1rem;text-align:center;">Not enough data yet.</p>';
+            return;
+        }
+        
+        listContainer.innerHTML = '<ul>' + rules.map(r => `
+            <li>
+              <span>When a customer buys <b>${escHtml(getProductName(r.antecedents))}</b>…</span>
+              <span style="font-size:.9em;color:var(--text-light)">
+                …they also buy <b>${escHtml(getProductName(r.consequents))}</b> ${(r.confidence * 100).toFixed(0)}% of the time.
+              </span>
+            </li>`).join('') + '</ul>';
+            
+    } catch (err) {
+        console.error('Insights error:', err);
+        listContainer.innerHTML = '<p style="padding:1rem;color:var(--danger-color)">Could not load insights.</p>';
     }
-    listContainer.innerHTML = '<ul>' + rules.map(r => `
-        <li>
-          <span>When a customer buys <b>${r.antecedents}</b>…</span>
-          <span style="font-size:.9em;color:var(--text-light)">
-            …they also buy <b>${r.consequents}</b> ${(r.confidence * 100).toFixed(0)}% of the time.
-          </span>
-        </li>`).join('') + '</ul>';
 }
 
 // ── PATCH 2: populateProductSelector — uses enriched endpoint ─
@@ -402,18 +432,30 @@ function animateCounter(id, target) {
     const el = document.getElementById(id);
     if (!el) return;
     
-    // Prevent the numbers from constantly spinning if they haven't changed!
+    // Parse the current value currently displayed on screen
     const currentVal = parseInt(el.textContent.replace(/,/g, '')) || 0;
+    
+    // Prevent the numbers from constantly spinning if they haven't changed!
     if (currentVal === target) return; 
 
     const start = performance.now();
-    const duration = 1000;
+    const duration = 1000; // 1 second animation duration
+    const diff = target - currentVal; // Calculate the difference
+    
     const tick = now => {
+        // p goes from 0 to 1 over the duration
         const p = Math.min((now - start) / duration, 1);
-        el.textContent = Math.floor(p * target).toLocaleString();
-        if (p < 1) requestAnimationFrame(tick);
-        else el.textContent = target.toLocaleString();
+        
+        // Smoothly animate from the current value to the new value
+        el.textContent = Math.floor(currentVal + (diff * p)).toLocaleString();
+        
+        if (p < 1) {
+            requestAnimationFrame(tick);
+        } else {
+            el.textContent = target.toLocaleString(); // Ensure it ends exactly on target
+        }
     };
+    
     requestAnimationFrame(tick);
 }
 
